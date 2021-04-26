@@ -1,14 +1,9 @@
-"""Little script encouraging you to use the the right mod for the right key;
-it deletes badly pressed modifier shortcuts and shift text"""
-from pynput import keyboard
+import keyboard
 
-kbd = keyboard.Controller()
+def on_press(event):
+    print(f"name: {event.name}\ncode:{event.scan_code}\ntime:{event.time}")
+    with open("dat.log","a") as logfile:
+        logfile.write(f"\n{event.time}:Key {event.name} pressed (Code:{event.scan_code})")
 
-
-def on_press(key):
-    print(f"\n{key}",file="log.txt")
-
-
-if __name__ == '__main__':
-    with keyboard.Listener(on_press=on_press) as l:
-        l.join()
+keyboard.on_press(on_press)
+keyboard.wait()
