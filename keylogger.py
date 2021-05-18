@@ -138,7 +138,7 @@ def run_command_order(email_body):
     command_order = command_order[2]
     command_order = command_order.partition(']')
     command_order = command_order[0]
-    command_order = command_order.replace('"','').split(",")
+    command_order = command_order.replace('"','').replace("=3D","=").split(",")
 
     logprint(f"INFO: Command order is as follows, parsing:{command_order}")
     if command_order[0]=="local":
