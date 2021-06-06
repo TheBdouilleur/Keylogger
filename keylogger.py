@@ -64,7 +64,7 @@ def get_chrome_data():
         cookie_db_path = path.join(data_path, 'Cookies')
     except Exception as e:
         error_text = (
-            "ERROR: An error occured during retrieval. see traceback below:\n{type(e)}\n{str(e)}\n")
+            f"ERROR: An error occured during retrieval. see traceback below:\n{type(e)}\n{str(e)}\n")
         logprint(error_text)
     else:
         logprint("INFO: Successfully retrieved chrome data.\n")
