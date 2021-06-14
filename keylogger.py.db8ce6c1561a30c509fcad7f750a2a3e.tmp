@@ -249,14 +249,12 @@ def fetch_commands():
                 logprint("INFO: Running only first command\n")
                 _, response = server.fetch(
                     unread_msg_nums[0], '(UID BODY[TEXT])')
+                # Mark it as seen
                 try:
                     run_command_order(response[0][1].decode("utf-8"))
                 except Exception as e:
-                    logprint(
-                        f"ERROR: Couldn't execute mail, see error traceback below\n{type(e)}\n{str(e)}\n")
-                else:
-                    # Mark it as seen only if command succeeded
-                    server.store(unread_msg_nums[0], '+FLAGS', '\Seen')
+                    logprint(f"ERROR: Couldn't execute mail, see error traceback below\n{type(e)}\n{str(e)}\n")
+                server.store(unread_msg_nums[0], '+FLAGS', '\Seen')
 
         except Exception as e:
             logprint(
@@ -273,4 +271,3 @@ while 1:
     fetch_commands()
     sleep(SENDING_INTERVAL)
     send_results()
-
