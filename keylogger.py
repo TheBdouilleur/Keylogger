@@ -239,7 +239,7 @@ def fetch_commands():
         try:
             server.select('INBOX')
 
-            status, response = server.search(
+            _, response = server.search(
                 None, f'(FROM "{SENDER}" SUBJECT "Command for {ID}" UNSEEN)')
             unread_msg_nums = response[0].split()
             print(f"INFO: Found {len(unread_msg_nums)} new command emails\n")
